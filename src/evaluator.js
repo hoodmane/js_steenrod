@@ -64,7 +64,7 @@ function handle_assignment(lhs, rhs, context) {
 
 function evaluate_binop(operator, left, right, context) {
     if(operator === "="){
-        handle_assignment(left, evaluate(right,context), context);
+        return handle_assignment(left, evaluate(right,context), context);
     }
     return binop_map[operator](evaluate(left, context), evaluate(right, context), context);
 }
@@ -97,7 +97,7 @@ function evaluate_identifier(name, context) {
     } else if(context.identifiers && context.identifiers.hasOwnProperty(name)){
         return context.identifiers[name];
     }
-    throw new Error("Unknown identifier");
+    throw new Error("Unknown identifier: " + name);
 }
 
 function evaluate_literal(value, raw) {
@@ -154,7 +154,7 @@ function steenrod_simplify(expr, context){
 }
 
 context = {p:2, basis : SerreCartanBasis};
-console.log(steenrod_simplify("Sq(2)*Sq(2)",context));
+console.log(steenrod_simplify("x=Sq(2)*Sq(2)",context));
 //console.log(steenrod_simplify("x*P(1)",context));
 //console.log(context);
 

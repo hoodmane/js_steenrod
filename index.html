@@ -9,7 +9,7 @@
 
     <script>
         context = { p : 2, basis : SerreCartanBasis};
-        bases = {"SerreCartan" : SerreCartanBasis, "Milnor" : MilnorBasis}
+        bases = {"SerreCartan" : SerreCartanBasis, "Milnor" : MilnorBasis};
         function run(){
             let prime_field = document.getElementById("prime");
             let input_field = document.getElementById("input");
@@ -35,7 +35,7 @@
     <input type="button" value="Compute!" onClick="run()">
     </div>
     <br/>
-    Prime: <input type="text" id="prime">
+    Prime: <input type="text" id="prime" value="2">
     <br/>
     Basis: <select id="basis">
         <option value="SerreCartan">SerreCartan</option>
