@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steenrod Algebra</title>
+    <script type="text/javascript" src="bundle.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML&delayStartupUntilConfig"></script>
+
+    <script>
+        context = { p : 2, basis : SerreCartanBasis};
+        bases = {"SerreCartan" : SerreCartanBasis, "Milnor" : MilnorBasis}
+        function run(){
+            let prime_field = document.getElementById("prime");
+            let input_field = document.getElementById("input");
+            let basis_field = document.getElementById("basis");
+            context.p = Number(prime_field.value);
+            context.basis = bases[basis_field.value];
+            let value = input_field.value;
+            let answer = steenrod_simplify(value, context);
+            let output = document.getElementById("answer");
+            output.innerText = answer.toString();
+        }
+
+        var replServer = repl.start({
+            prompt: "my-app > ",
+        });
+    </script>
+</head>
+<body>
+
+<form name="form">
+    <div>
+    <input type="text" id="input" name="input" style="width: 10cm; height: 16pt" onkeydown="if (event.keyCode == 13) {run(); return false}">
+    <input type="button" value="Compute!" onClick="run()">
+    </div>
+    <br/>
+    Prime: <input type="text" id="prime">
+    <br/>
+    Basis: <select id="basis">
+        <option value="SerreCartan">SerreCartan</option>
+        <option value="Milnor">Milnor</option><
+    </select>
+</form><br>
+Result: <span id="answer"></span>
+
+</body>
+</html>
