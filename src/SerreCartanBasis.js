@@ -2,7 +2,6 @@ let Vector = require("./vector.js");
 let binomial = require("./combinatorics.js").binomial;
 
 
-
 function adem(a, b, c, p=2, generic=undefined){
     if(generic===undefined){
         generic = p!==2;
@@ -113,11 +112,9 @@ function make_mono_admissible(mono, p=2, generic=undefined){
             return result;
         }
         // else j is the first index where admissibility fails
-        console.log(mono);
         let y = adem(mono[j], mono[j+1]);
         for(let x of y.keys()){
             let new_vec = mono.slice(0,j).concat(x,mono.slice(j+2));
-            console.log(new_vec);
             new_vec = make_mono_admissible(new_vec);
             result.addVector(new_vec, y.get(x));
         }
@@ -194,6 +191,13 @@ class SerreCartanBasis extends Vector {
         result.set([1],1);
         return result;
     }
+
+    static Q(n,p){
+        let result = new SerreCartanBasis(p);
+        throw new Error("Not implemented");
+        //return result;
+    }
+
 
     mult(other_vector){
         if(other_vector.constructor === Number){
@@ -281,6 +285,9 @@ class SerreCartanBasis extends Vector {
 }
 
 module.exports = SerreCartanBasis;
+
+
+
 
 //console.log(adem(2,2).m);
 //console.log( make_mono_admissible([2,2]).m);

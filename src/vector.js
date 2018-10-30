@@ -34,7 +34,7 @@ class Vector extends StringifyingMap {
     }
 
     add(other_vector){
-        let result = new Vector(this.p);
+        let result = new this.constructor(this.p);
         for(const [mono,coeff] of this){
             result.set(mono,coeff);
         }
@@ -52,6 +52,14 @@ class Vector extends StringifyingMap {
                 let prod = term_multiply(mono1,mono2);
                 result.addVector(prod,coeff1*coeff2);
             }
+        }
+        return result;
+    }
+
+    map_on_basis(f){
+        let result = new this.constructor(this.p);
+        for(const [mono1,coeff1] of this){
+            result.addVector(f(mono1),coeff1);
         }
         return result;
     }

@@ -47,7 +47,7 @@ function find_next_milnor_matrix(r, s, M, p){
 
 
 function milnor_multiplication_even(r, s, p){
-    let result = new Vector(p);
+    let result = new MilnorBasis(p);
     let rows = r.length + 1;
     let cols = s.length + 1;
     let diags = r.length + s.length;
@@ -94,14 +94,14 @@ function milnor_multiplication_full(m1, m2, p){
     let s = m2[1];
     // First compute Q_e0 Q_e1 ... P(r1, r2, ...) Q_f0 Q_f1 ...
     // Store results (as dictionary of pairs of tuples) in 'answer'.
-    let answer = new Vector(p);
+    let answer = new MilnorBasis(p);
     answer.set(m1,1);
     for(let k of f){
         let old_answer = answer;
-        answer = new Vector(p);
+        answer = new MilnorBasis(p);
         for(let mono of old_answer.keys()){
             for(let i = 0; i < 1 + mono[1].length; i++){
-                if((!mono[0].includes(k+i)) && ( i == 0 || Math.pow(p,k) <= mono[1][i-1])){
+                if((!mono[0].includes(k+i)) && ( i === 0 || Math.pow(p,k) <= mono[1][i-1])){
                     let q_mono = new Set(mono[0]);
                     q_mono = [...q_mono];
                     let ind;
@@ -111,14 +111,14 @@ function milnor_multiplication_full(m1, m2, p){
                         ind = 0;
                     }
                     let coeff = -(2*(ind%2) - 1) * old_answer.get(mono); // (-1)^ind * old_answer[mono]
-                    let lst = mono[0];
+                    let lst = mono[0].slice();
                     if(ind === 0){
                         lst.push(k+i)
                     } else {
                         lst.splice(lst.length -ind, 0, k+i);
                     }
                     q_mono = lst;
-                    let p_mono = mono[1];
+                    let p_mono = mono[1].slice();
                     if(i>0){
                         p_mono[i-1] = p_mono[i-1] - Math.pow(p,k);
                     }
@@ -130,7 +130,6 @@ function milnor_multiplication_full(m1, m2, p){
                     while(p_mono.length>0 && p_mono[p_mono.length - 1] === 0){
                         p_mono.pop()
                     }
-
                     answer.set([q_mono, p_mono], (coeff % p + p)%p);
                 }
             }
@@ -143,7 +142,7 @@ function milnor_multiplication_full(m1, m2, p){
     if(s.length === 0){
         result = answer;
     } else {
-        result = new Vector(p);
+        result = new MilnorBasis(p);
         for(const [e,r] of answer.keys()){
             let coeff = answer.get([e,r]);
             let prod = milnor_multiplication_even(r, s, p);
@@ -164,9 +163,20 @@ function milnor_multiplication(r, s, p){
 }
 
 
+
 class MilnorBasis extends Vector {
     constructor(p){
         super(p);
+    }
+
+    static unit(p){
+        let result = new MilnorBasis(p);
+        if(p===2){
+            result.set([],1);
+        } else {
+            result.set([[],[]],1)
+        }
+        return result;
     }
 
     static Q(n,p){
@@ -281,7 +291,7 @@ class MilnorBasis extends Vector {
             for(let [k,v] of this){
                 let qstr = k[0].map((n) => `Q${n}`).join("*");
                 let pstr = k[1].length > 0 ? `P(${k[1].join(", ")})` : "";
-                let str = pstr + qstr;
+                let str = [qstr, pstr].filter((s) => s!=="").join("*");
                 if(v !== 1){
                     str = v + "*" + str;
                 }
@@ -301,6 +311,10 @@ class MilnorBasis extends Vector {
 }
 
 module.exports = MilnorBasis;
+
+
+//console.log(milnor_multiplication([],[1,2],2));
+
 
 //console.log(milnor_multiplication_even([2], [2], 2));
 //console.log(milnor_multiplication([[3],[]], [[1],[]], 5).m);

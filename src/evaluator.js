@@ -54,9 +54,8 @@ function handle_assignment(lhs, rhs, context) {
         context.identifiers[context.p] = {};
     }
     if(lhs.type === "Identifier"){
-        let result = evaluate(rhs, context);
-        context.identifiers[context.p][lhs.name] = result;
-        return result;
+        context.identifiers[context.p][lhs.name] = rhs;
+        return rhs;
     } else {
         throw new Error(`Invalid left hand side of assignment. ${tree_to_string(lhs)} is not a valid identifier.`);
     }
@@ -91,11 +90,19 @@ function evaluate_array(elements, context) {
     return undefined;
 }
 
+let Sqn_re = /(Sq|P|Q|bP)(\d+)/;
 function evaluate_identifier(name, context) {
     if(identifier_map.hasOwnProperty(name)){
         return identifier_map[name](context);
-    } else if(context.identifiers && context.identifiers.hasOwnProperty(name)){
-        return context.identifiers[name];
+    }
+    if(Sqn_re.test(name)){
+        let op_n = Sqn_re.exec(name);
+        let op = op_n[1];
+        let n  = op_n[2];
+        return function_map[op]([Number(n)],context);
+    }
+    if(context.identifiers && context.identifiers[context.p] && context.identifiers[context.p].hasOwnProperty(name)){
+        return context.identifiers[context.p][name];
     }
     throw new Error("Unknown identifier: " + name);
 }
@@ -153,8 +160,9 @@ function steenrod_simplify(expr, context){
     return evaluate(jsep(expr),context);
 }
 
+
 context = {p:2, basis : SerreCartanBasis};
-console.log(steenrod_simplify("x=Sq(2)*Sq(2)",context));
+console.log(steenrod_simplify("(Sq2*Sq1+Sq3)*Sq2",context));
 //console.log(steenrod_simplify("x*P(1)",context));
 //console.log(context);
 
