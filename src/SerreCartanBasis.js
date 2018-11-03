@@ -1,6 +1,6 @@
 let Vector = require("./vector.js");
 let binomial = require("./combinatorics.js").binomial;
-
+let MilnorBasis = require("./MilnorBasis");
 
 function adem(a, b, c, p=2, generic=undefined){
     if(generic===undefined){
@@ -157,31 +157,49 @@ class SerreCartanBasis extends Vector {
     }
 
     static Sq(n,p){
+        if(Array.isArray(n) && n.length > 1){
+            return MilnorBasis.Sq(n,p).toSerreCartan();
+        }
+        if(Array.isArray(n)){
+            n = n[0];
+        }
         let result = new SerreCartanBasis(p);
         if(p === 2){
-            result.set(n,1);
+            result.set([n],1);
         } else {
-            result.set([n[0]%2,Math.floor(n[0]/2),0],1);
+            result.set([n%2,Math.floor(n/2),0],1);
         }
         return result;
     }
 
     static P(n,p){
+        if(Array.isArray(n) && n.length>1) {
+            return MilnorBasis.P(n, p).toSerreCartan();
+        }
+        if(Array.isArray(n)){
+            n = n[0];
+        }
         let result = new SerreCartanBasis(p);
-        if(p === 2){
-            result.set([2*n[0]],1);
+        if (p === 2) {
+            result.set([2 * n], 1);
         } else {
-            result.set([0,n[0],0],1);
+            result.set([0, n, 0], 1);
         }
         return result;
     }
 
     static bP(n,p){
+        if(Array.isArray(n) && n.length>1) {
+            return MilnorBasis.P(n, p).toSerreCartan();
+        }
+        if(Array.isArray(n)){
+            n = n[0];
+        }
         let result = new SerreCartanBasis(p);
-        if(p === 2){
-            result.set([2*n[0]+1],1);
+        if (p === 2) {
+            result.set([2 * n + 1], 1);
         } else {
-            result.set([1,n[0],0],1);
+            result.set([1, n, 0], 1);
         }
         return result;
     }
@@ -193,11 +211,12 @@ class SerreCartanBasis extends Vector {
     }
 
     static Q(n,p){
-        let result = new SerreCartanBasis(p);
-        throw new Error("Not implemented");
-        //return result;
+        return MilnorBasis.Q(n, p).toSerreCartan();
     }
 
+    static pst(st, p){
+        return MilnorBasis.pst(st, p).toSerreCartan();
+    }
 
     mult(other_vector){
         if(other_vector.constructor === Number){
@@ -281,6 +300,10 @@ class SerreCartanBasis extends Vector {
             result = 0;
         }
         return result;
+    }
+
+    toJSON(){
+        return "1s@" + this.toString() + "@s1";
     }
 }
 

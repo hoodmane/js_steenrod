@@ -181,18 +181,18 @@ class MilnorBasis extends Vector {
 
     static Q(n,p){
         let result = new MilnorBasis(p);
-        if(!Array.isArray(n)){
-            n = [n];
+        if(Array.isArray(n) && n.length > 1){
+            return n.map( (i) => Q(i,p)).reduce((a,b)=>a.mult(b), MilnorBasis.unit(p));
         }
-        if(p===2){
-            let m = Array(Math.max(...n)).fill().map((_,idx) => +n.includes(idx));
+        if(Array.isArray(n)){
+            n = n[0];
+        }
+        if(p === 2){
+            let m = Array(n+1).fill(0);
+            m[n] = 1;
             result.set(m, 1);
         } else {
-            if(n.length > 1){
-                return n.map((k) => MilnorBasis.Q(k,p)).reduce((a,b) => a.mult(b));
-            } else {
-                result.set([n,[]],1);
-            }
+            result.set([[n],[]],1);
         }
         return result;
     }
@@ -228,9 +228,9 @@ class MilnorBasis extends Vector {
     static bP(n,p){
         let result = new MilnorBasis(p);
         if(p === 2){
-            result.set([2*n+1],1);
+            return milnor_multiplication_even([1],n,2);
         } else {
-            result.set([[1],[n]],1);
+            result.set([[1],n],1);
         }
         return result;
     }
@@ -243,6 +243,18 @@ class MilnorBasis extends Vector {
             result.set([[0],[]],1);
         }
         return result;
+    }
+
+    static pst(st, p) {
+        let s = st[0];
+        let t = st[1];
+        let n = Array(t).fill(0);
+        n[t-1] = Math.pow(p, s);
+        if( p === 2 ){
+            return MilnorBasis.Sq(n, p);
+        } else {
+            return MilnorBasis.P(n, p);
+        }
     }
 
     mult(other_vector){
@@ -307,6 +319,10 @@ class MilnorBasis extends Vector {
 
     inspect(depth,opts){
         return this.toString();
+    }
+
+    toJSON(){
+        return "1s@" + this.toString() + "@s1";
     }
 }
 

@@ -24,9 +24,12 @@ SerreCartanBasis.basis_to_milnor = function(b, p){
 };
 
 SerreCartanBasis.prototype.toMilnor = function(){
-    return this.map_on_basis((x) => SerreCartanBasis.basis_to_milnor(x,this.p));
+    return this.map_on_basis((x) => SerreCartanBasis.basis_to_milnor(x,this.p),MilnorBasis);
 };
 
+let pad_array = function(arr, len, fill) {
+    return arr.concat(Array(len).fill(fill)).slice(0,len);
+};
 
 MilnorBasis.basis_to_serrecartan = function(b, p) {
     let result;
@@ -39,24 +42,28 @@ MilnorBasis.basis_to_serrecartan = function(b, p) {
         }
         let x = SerreCartanBasis.basis_to_milnor(t, p);
         x.delete(b);
-        result = x.map_on_basis((m) => MilnorBasis.basis_to_serrecartan(m, p));
+        result = x.map_on_basis((m) => MilnorBasis.basis_to_serrecartan(m, p),SerreCartanBasis);
         result.set(t,1);
     } else {
-        if(b[0].length > 0 ){
-            throw new Error("Not yet implemented");
-        }
-        let t = Array(2*b[1].length + 1);
+        let e = b[0];
+        let s = b[1];
+        let len = Math.max(s.length, ...e);
+        s = pad_array(s, len, 0);
+        let t = Array(2*len + 1);
         t.fill(0);
-        t[t.length - 2] = b[1][b[1].length - 1];
+        for(let i of e){
+            t[2*i] = 1;
+        }
+        t[t.length - 2] = s[s.length - 1] + t[t.length - 1];
         let idx = t.length - 2;
-        for (let i = b[1].length - 2; i >= 0; i--) {
+        for (let i = s.length - 2; i >= 0; i--) {
             idx -= 2;
-            t[idx] = b[1][i] + p * t[idx + 2];
+            t[idx] = t[idx + 1] + s[i] + p * t[idx + 2];
         }
         let x = SerreCartanBasis.basis_to_milnor(t, p);
         x.delete(b);
         x.scale(-1);
-        result = x.map_on_basis((m) => MilnorBasis.basis_to_serrecartan(m, p));
+        result = x.map_on_basis((m) => MilnorBasis.basis_to_serrecartan(m, p),SerreCartanBasis);
         result.set(t,1);
     }
     let result_copy = new SerreCartanBasis(p);
@@ -64,6 +71,10 @@ MilnorBasis.basis_to_serrecartan = function(b, p) {
         result_copy.set(k,v);
     }
     return result_copy;
+};
+
+MilnorBasis.prototype.toSerreCartan = function(){
+    return this.map_on_basis((x) => MilnorBasis.basis_to_serrecartan(x,this.p),SerreCartanBasis);
 };
 
 // console.log("a:");
@@ -82,7 +93,7 @@ MilnorBasis.basis_to_serrecartan = function(b, p) {
 // console.log(MilnorBasis.basis_to_serrecartan([[],[1,2]],3));
 // console.log(MilnorBasis.basis_to_serrecartan([[],[0,3]],3));
 // console.log(MilnorBasis.basis_to_serrecartan([[],[1,3]],3));
-
+//console.log(MilnorBasis.basis_to_serrecartan([[1],[0,1]],3));
 
 
 // console.log(SerreCartanBasis.basis_to_milnor([0,3,1],3));

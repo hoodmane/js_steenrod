@@ -1,48 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Steenrod Algebra</title>
-    <script type="text/javascript" src="bundle.js"></script>
-    <script type="text/javascript"
-            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML&delayStartupUntilConfig"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://unpkg.com/jquery.terminal@1.x.x/js/jquery.terminal.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/jquery.terminal@1.x.x/css/jquery.terminal.min.css"/>
 
-    <script>
-        context = { p : 2, basis : SerreCartanBasis};
-        bases = {"SerreCartan" : SerreCartanBasis, "Milnor" : MilnorBasis};
-        function run(){
-            let prime_field = document.getElementById("prime");
-            let input_field = document.getElementById("input");
-            let basis_field = document.getElementById("basis");
-            context.p = Number(prime_field.value);
-            context.basis = bases[basis_field.value];
-            let value = input_field.value;
-            let answer = steenrod_simplify(value, context);
-            let output = document.getElementById("answer");
-            output.innerText = answer.toString();
-        }
-
-        var replServer = repl.start({
-            prompt: "my-app > ",
-        });
-    </script>
+<script type="text/javascript" src="bundle.js"></script>
+<link rel="stylesheet" type="text/css" href="index.css" media="screen" />
 </head>
 <body>
+<h2>Steenrod Algebra</h2>
+<div id="terminal"></div>
+<script>
+        (function($){
+            $('#terminal').terminal(function(command, term) {
+              if (command !== '') {
+                try {
+                  let result = run(command);
+                  if (result !== undefined)
+                    term.echo(result);
+                } catch(e) {
+                  term.error(e);
+                  //term.error(e.stack);
+                }
+              } else
+                term.echo('');
+            },
+            {
+              greetings: '', // uncomment for custom greetings
+              name: 'js_demo',
+              height: "90%",
+              //width:900, // adjust width accordingly
+              prompt: '> ',
+              completion: ['setPrime', 'setBasis',"SerreCartan","Milnor"]
+            });
+        })(jQuery);
 
-<form name="form">
-    <div>
-    <input type="text" id="input" name="input" style="width: 10cm; height: 16pt" onkeydown="if (event.keyCode == 13) {run(); return false}">
-    <input type="button" value="Compute!" onClick="run()">
-    </div>
-    <br/>
-    Prime: <input type="text" id="prime" value="2">
-    <br/>
-    Basis: <select id="basis">
-        <option value="SerreCartan">SerreCartan</option>
-        <option value="Milnor">Milnor</option><
-    </select>
-</form><br>
-Result: <span id="answer"></span>
-
+        document.documentElement.style.overflow = 'hidden';  // firefox, chrome
+        document.body.scroll = "no"; // ie only
+</script>
 </body>
 </html>

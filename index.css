@@ -1,0 +1,17 @@
+.terminal div{
+    margin-bottom: 10px;
+}
+
+.terminal-output, .cmd{
+    font-size: 20pt;
+}
+
+.cmd, .cmd *, .terminal, .terminal-wrapper * {
+    background-color: #eee;
+    color: #000;
+}
+
+
+html, body{
+    height: 100%;
+}

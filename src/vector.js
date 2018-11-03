@@ -56,8 +56,11 @@ class Vector extends StringifyingMap {
         return result;
     }
 
-    map_on_basis(f){
-        let result = new this.constructor(this.p);
+    map_on_basis(f, output_type){
+        if(output_type === undefined){
+            output_type = this.constructor;
+        }
+        let result = new output_type(this.p);
         for(const [mono1,coeff1] of this){
             result.addVector(f(mono1),coeff1);
         }
