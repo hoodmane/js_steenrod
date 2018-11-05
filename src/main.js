@@ -3,17 +3,27 @@ let preprocess = require("./preprocessor");
 
 let SerreCartanBasis = require("./SerreCartanBasis");
 let MilnorBasis = require("./MilnorBasis");
-require("./ChangeBasis");
+let SteenrodAlgebra = require("./SteenrodAlgebra");
 
+let algebra = new SteenrodAlgebra(2, SerreCartanBasis);
 context = {};
-context.basis = SerreCartanBasis;
-context.p = 2;
+context.algebra = algebra;
 
-function passToBasis(f){
-    context[f + "_call"] = function(...args){
-        return context.basis[f](args,context.p);
-    }
+function setPrime(p){
+    context.algebra = new SteenrodAlgebra(p, context.algebra.basis);
 }
+
+bases = {"Milnor" : MilnorBasis, "SerreCartan" : SerreCartanBasis};
+
+function setBasis(b){
+    if(bases[b]){
+        b = bases[b];
+    }
+    context.algebra.basis = b;
+}
+
+
+setBasis(SerreCartanBasis);
 
 context.MULT = function(a,b){
     if(a.mult){
@@ -42,7 +52,7 @@ context.SUB = function(a,b){
         return a - b;
     }
 
-}
+};
 
 context.MINUS = function(a){
     if(a.scale){
@@ -52,9 +62,25 @@ context.MINUS = function(a){
     }
 };
 
+context.EQUAL = function(x, y){
+    if(x.equal){
+        return x.equal(y);
+    }
+    if(y.equal){
+        return false;
+    }
+    return x == y;
+};
 
 
-["Sq", "b", "P", "Q", "pst"].forEach(passToBasis);
+function passToAlgebra(f){
+    context[f] = function(...args){
+        return context.algebra[f](...args);
+    }
+}
+
+["Sq", "b", "P","bP", "Q", "pst"].forEach(passToAlgebra);
+
 
 function run(code){
     let result = eval(preprocess(code));
@@ -65,9 +91,32 @@ function run(code){
     return result;
 }
 
-//console.log(run("Sq2*Sq1"));
+// console.log("sq2: ", context.Sq(2).mult(context.Sq(1)).getSerreCartan());
+//
+console.log(run("Sq2*Sq1"));
+// console.log(run("Sq1==Sq1"));
+// console.log(run("b"));
+// console.log(SerreCartanBasis.b(2));
+
+
+//console.log(context.Q(1,1));
+//console.log(run("range(4).map(Sq)"));
+
+function range(start, stop, step = 1){
+    if(arguments.length === 1){
+        start = 1;
+        stop = arguments[0];
+        step = 1;
+    }
+    return Array(Math.ceil((stop - start + step)/step)).fill(start).map((x, y) => x + y * step);
+}
+
 
 if(typeof window !== 'undefined'){
     window.context = context;
+    window.setPrime = setPrime;
+    window.setBasis = setBasis;
+    window.SteenrodAlgebra = SteenrodAlgebra;
     window.run = run;
+    window.range = range;
 }

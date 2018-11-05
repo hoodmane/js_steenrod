@@ -1,3 +1,4 @@
+let error = require("./errors");
 let Vector = require("./vector.js");
 let binomial = require("./combinatorics.js").binomial;
 let MilnorBasis = require("./MilnorBasis");
@@ -6,7 +7,7 @@ function adem(a, b, c, p=2, generic=undefined){
     if(generic===undefined){
         generic = p!==2;
     }
-    result = new Vector(p);
+    let result = new Vector(p);
     if(!generic){
         if(b === 0){
             result.set([a],1);
@@ -158,11 +159,12 @@ class SerreCartanBasis extends Vector {
 
     static Sq(n,p){
         if(Array.isArray(n) && n.length > 1){
-            return MilnorBasis.Sq(n,p).toSerreCartan();
+            throw new Error("Use Milnor Basis for Sq with multiple arguments");
         }
         if(Array.isArray(n)){
             n = n[0];
         }
+        error.checkNonnegativeInteger("Sq",[n],n);
         let result = new SerreCartanBasis(p);
         if(p === 2){
             result.set([n],1);
@@ -174,11 +176,12 @@ class SerreCartanBasis extends Vector {
 
     static P(n,p){
         if(Array.isArray(n) && n.length>1) {
-            return MilnorBasis.P(n, p).toSerreCartan();
+            throw new Error("Use Milnor Basis for P with multiple arguments");
         }
         if(Array.isArray(n)){
             n = n[0];
         }
+        error.checkNonnegativeInteger("P",[n],n);
         let result = new SerreCartanBasis(p);
         if (p === 2) {
             result.set([2 * n], 1);
@@ -190,11 +193,12 @@ class SerreCartanBasis extends Vector {
 
     static bP(n,p){
         if(Array.isArray(n) && n.length>1) {
-            return MilnorBasis.P(n, p).toSerreCartan();
+            throw new Error("Use Milnor Basis for bP with multiple arguments");
         }
         if(Array.isArray(n)){
             n = n[0];
         }
+        error.checkNonnegativeInteger("bP",[n],n);
         let result = new SerreCartanBasis(p);
         if (p === 2) {
             result.set([2 * n + 1], 1);
@@ -210,13 +214,6 @@ class SerreCartanBasis extends Vector {
         return result;
     }
 
-    static Q(n,p){
-        return MilnorBasis.Q(n, p).toSerreCartan();
-    }
-
-    static pst(st, p){
-        return MilnorBasis.pst(st, p).toSerreCartan();
-    }
 
     mult(other_vector){
         if(other_vector.constructor === Number){
@@ -236,6 +233,46 @@ class SerreCartanBasis extends Vector {
                 }
             }, other_vector);
         }
+    }
+
+    homogenousQ(){
+        let degs = new Set();
+        let deg = 0;
+        for(let [m,c] of this){
+            deg = m.reduce((a,b)=>a+b);
+            degs.add(deg);
+        }
+        if(degs.size <= 1){
+            this.deg = deg;
+        }
+        return degs.size <= 1;
+    }
+
+    degree(){
+        if(this.homogenousQ()){
+            return this.deg;
+        } else {
+            throw new Error("Inhomogenous element");
+        }
+    }
+
+    excess(){
+        let exc = Number.MAX_SAFE_INTEGER;
+        for(let [m,c] of this){
+            if(m.length === 0){
+                return 0;
+            }
+            let monomial_excess;
+            if( this.p === 2 ) {
+                monomial_excess = 2 * m[0] - m.reduce((a, b) => a + b);
+            } else {
+                monomial_excess = 2*m[0] + 4*m[1] - m.map((x,idx) => ((idx + 1)%2+1)*x).reduce((a,b)=>a+b);
+            }
+            if(monomial_excess < exc){
+                exc = monomial_excess;
+            }
+        }
+        return exc;
     }
 
     inspect(depth,opts){

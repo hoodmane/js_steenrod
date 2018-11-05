@@ -11,7 +11,8 @@ function getContextMemberNode(id){
     };
     node.property = {
         "type" : "Identifier",
-        "name" : id
+        "name" : id,
+        "member" : true
     };
     return node;
 }
@@ -19,7 +20,8 @@ function getContextMemberNode(id){
 let binary_operator_to_fn_map = {
     "+" : "ADD",
     "-" : "SUB",
-    "*" : "MULT"
+    "*" : "MULT",
+    "==": "EQUAL"
 };
 
 let unary_operator_to_fn_map = {
@@ -59,15 +61,18 @@ type_to_enter_fn_map.UnaryExpression = function(node) {
     return node;
 };
 
-let Sq_re = /^(Sq|P|Q|bP|pst|b)$/;
+let Sq_re = /^(Sq|P|Q|bP|pst)$/;
 let Sqn_re = /^(Sq|P|Q|bP)(\d+)$/;
 type_to_enter_fn_map.Identifier = function(node){
+    if(node.member){
+        return node;
+    }
     if(Sqn_re.test(node.name)){
         let op_n = Sqn_re.exec(node.name);
         let op = op_n[1];
         let n  = op_n[2];
         node.type = "CallExpression";
-        node.callee = getContextMemberNode(op + "_call");
+        node.callee = getContextMemberNode(op);
         node.arguments = [
             {
                 "type": "Literal",
@@ -77,19 +82,28 @@ type_to_enter_fn_map.Identifier = function(node){
         ];
         node.name = null;
     } else if(Sq_re.test(node.name)){
-        Object.assign(node, getContextMemberNode(node.name + "_call"));
+        Object.assign(node, getContextMemberNode(node.name));
         node.identifier = null;
+    } else if(node.name === "b"){
+        node.type = "CallExpression";
+        node.callee = getContextMemberNode("b");
+        node.arguments = [];
+        node.identifier = null;
+        node.name = null;
     }
     return node;
 };
 
 //console.log(JSON.stringify(esprima.parse("-Sq2"),null,'\t'));
-//console.log(JSON.stringify(esprima.parse("Sq(2)"),null,'\t'));
+//console.log(JSON.stringify(esprima.parse("a.b.c"),null,'\t'));
 
 function preprocess(code){
     let ast  = esprima.parse(code);
     estraverse.traverse(ast, {
         enter: function(node) {
+            if(node.type === "MemberExpression"){
+                node.property.member = true;
+            }
             if(type_to_enter_fn_map[node.type]){
                 type_to_enter_fn_map[node.type](node);
             }
@@ -99,6 +113,8 @@ function preprocess(code){
     return modified_code;
 }
 
+//preprocess("range(5).map(Sq)");
+//preprocess("range(5).map(context.Sq)");
 //console.log(JSON.stringify(esprima.parse("b(c)"),null,'\t'));
 //console.log(preprocess("-Sq(2)"));
 

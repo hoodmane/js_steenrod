@@ -6,6 +6,14 @@ class Vector extends StringifyingMap {
         this.p = p;
     }
 
+    copy(){
+        let result = new this.constructor(this.p);
+        for(const [mono,coeff] of this){
+            result.set(mono,coeff);
+        }
+        return result;
+    }
+
     addTerm(monomial, coeff){
         if(this.has(monomial)){
             coeff += this.get(monomial);
@@ -54,6 +62,22 @@ class Vector extends StringifyingMap {
             }
         }
         return result;
+    }
+
+    equal(other_vector){
+        let checkedKeys = new StringifyingMap();
+        for(let [k, v] of this){
+            if(this.get(k) !== other_vector.get(k)){
+                return false;
+            }
+            checkedKeys.set(k,1);
+        }
+        for(let [k, v] of other_vector){
+            if(!checkedKeys.has(k)){
+                return false;
+            }
+        }
+        return true;
     }
 
     map_on_basis(f, output_type){
