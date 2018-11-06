@@ -61,7 +61,10 @@ type_to_enter_fn_map.UnaryExpression = function(node) {
     return node;
 };
 
-let Sq_re = /^(Sq|P|Q|bP|pst)$/;
+let algebra_functions = new Set([
+    "Sq","P","Q","bP","pst",
+    "basis"
+]);
 let Sqn_re = /^(Sq|P|Q|bP)(\d+)$/;
 type_to_enter_fn_map.Identifier = function(node){
     if(node.member){
@@ -81,7 +84,7 @@ type_to_enter_fn_map.Identifier = function(node){
             }
         ];
         node.name = null;
-    } else if(Sq_re.test(node.name)){
+    } else if(algebra_functions.has(node.name)){
         Object.assign(node, getContextMemberNode(node.name));
         node.identifier = null;
     } else if(node.name === "b"){

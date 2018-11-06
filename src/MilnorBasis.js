@@ -443,8 +443,7 @@ function milnor_basis_even(n, p, profile, trunc){
 }
 
 
-
-function milnor_basis(n, p=2, kwds = {}){
+function milnor_basis(n, p = 2, generic = undefined, kwds = {}){
     /*
     Milnor basis in dimension `n` with profile function ``profile``.
 
@@ -509,7 +508,7 @@ function milnor_basis(n, p=2, kwds = {}){
         sage: len(milnor_basis(240,7, profile=((),()), truncation_type=0))
         0
     */
-    let generic = kwds['generic'] || p !== 2;
+    generic = generic || p !== 2;
 
     if(n === 0){
         if(!generic){
@@ -530,59 +529,69 @@ function milnor_basis(n, p=2, kwds = {}){
     let result = [];
     if(!generic) {
         return milnor_basis_even(n, 2, profile, trunc);
-    } else {  // p odd
-        // first find the P part of each basis element.
-        // in this part of the code (the P part), all dimensions are
-        // divided by 2(p-1).
-        for (let dim = 0; dim < n / (2 * (p - 1)) + 1; dim++) {
-            let P_result = milnor_basis_even(dim, p, profile && profile[0], trunc);
-            P_result = P_result.map( (x) => x.length === 0 ? [0] : x);
-            // now find the Q part of the basis element.
-            // dimensions here are back to normal.
-            for (let p_mono of P_result) {
-                let deg = n - 2 * dim * (p - 1);
-                let q_degrees = combinatorics.xi_degrees(Math.floor((deg - 1)/(2*(p-1))), p).map( d =>  1+2*(p-1)*d);
-                q_degrees.push(1);
-                let q_degrees_decrease = q_degrees;
-                q_degrees.reverse();
-                if (deg % (2 * (p - 1)) <= q_degrees.length) {
-                    // if this inequality fails, no way to have a partition
-                    // with distinct parts.
-                    for (let sigma of combinatorics.restricted_partitions(deg, q_degrees_decrease, true)) {
-                        let q_mono = [];
-                        for(let index = 0; index < q_degrees.length; index++){
-                            if(sigma.includes(q_degrees[index])){
-                                q_mono.push(index)
-                            }
-                        }
-                        // check profile:
-                        let okay = true;
-                        if (profile !== undefined && profile[1].length > 0){
-                            // check profile function for q_mono
-                            for(let i of q_mono) {
-                                if ((profile[1].length > i && profile[1][i] === 1) || (profile[1].length <= i && trunc === 0)) {
-                                    okay = false;
-                                    break
-                                }
-                            }
-                        } else {
-                            // profile is empty
-                            okay = (trunc === Infinity);
-                        }
-                        if (okay) {
-                            if (p_mono.length === 1 && p_mono[0] === 0) {
-                                p_mono = [];
-                            }
-                            result.push([q_mono, p_mono]);
-                        }
+    }
+    // p odd
+    // dim records the desired dimension of the P part of the basis element.
+    // Since p-parts are always divisible by 2p-2, we divide by this first.
+    for (let dim = 0; dim < n / (2 * (p - 1)) + 1; dim++) {
+        // If we need to, we'll store the set of P-parts with this dimension in P-result.
+        //
+        let P_result;
+        // now find the Q part of the basis element.
+        // dimensions here are back to normal.
+        let deg = n - 2 * dim * (p - 1);
+        let q_degrees = combinatorics.xi_degrees(Math.floor((deg - 1)/(2*(p-1))), p).map( d =>  1+2*(p-1)*d);
+        q_degrees.push(1);
+        let q_degrees_decrease = q_degrees;
+        q_degrees.reverse();
+        if (deg % (2 * (p - 1)) > q_degrees.length) {
+            // if this inequality holds, no way to have a partition
+            // with distinct parts.
+            continue;
+        }
+        for (let sigma of combinatorics.restricted_partitions(deg, q_degrees_decrease, true)) {
+            let q_mono = [];
+            for(let index = 0; index < q_degrees.length; index++){
+                if(sigma.includes(q_degrees[index])){
+                    q_mono.push(index)
+                }
+            }
+            // check profile:
+            let okay = true;
+            if (profile !== undefined && profile[1].length > 0){
+                // check profile function for q_mono
+                for(let i of q_mono) {
+                    if(profile[1].length > i && profile[1][i] === 1){
+                        okay = false;
+                        break
+                    }
+                    if(profile[1].length <= i && trunc === 0){
+                        okay = false;
+                        break;
                     }
                 }
+            } else {
+                // profile is empty
+                okay = (trunc === Infinity);
+            }
+            if (!okay) {
+                // This partition doesn't satisfy profile, try next one.
+                // This continue only applies to inner for loop.
+                continue;
+            }
+            if(!P_result) {
+                P_result = milnor_basis_even(dim, p, profile && profile[0], trunc);
+                P_result = P_result.map((x) => x.length === 0 ? [0] : x);
+            }
+            for(let p_mono of P_result){
+                result.push([q_mono, p_mono]);
             }
         }
     }
     return result;
 }
 
+MilnorBasis.basis = milnor_basis;
 
 /*
 console.log(milnor_basis(7));

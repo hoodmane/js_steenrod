@@ -19,7 +19,7 @@ function setBasis(b){
     if(bases[b]){
         b = bases[b];
     }
-    context.algebra.basis = b;
+    context.algebra.setBasis(b);
 }
 
 
@@ -79,7 +79,12 @@ function passToAlgebra(f){
     }
 }
 
-["Sq", "b", "P","bP", "Q", "pst"].forEach(passToAlgebra);
+console.log(context.algebra.basis);
+
+[
+    "Sq", "b", "P","bP", "Q", "pst",
+    "basis"
+].forEach(passToAlgebra);
 
 
 function run(code){
@@ -93,7 +98,7 @@ function run(code){
 
 // console.log("sq2: ", context.Sq(2).mult(context.Sq(1)).getSerreCartan());
 //
-console.log(run("Sq2*Sq1"));
+console.log(run("basis(2)"));
 // console.log(run("Sq1==Sq1"));
 // console.log(run("b"));
 // console.log(SerreCartanBasis.b(2));

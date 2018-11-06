@@ -3,9 +3,9 @@ let Vector = require("./vector.js");
 let binomial = require("./combinatorics.js").binomial;
 let MilnorBasis = require("./MilnorBasis");
 
-function adem(a, b, c, p=2, generic=undefined){
-    if(generic===undefined){
-        generic = p!==2;
+function adem(a, b, c, p = 2, generic = undefined){
+    if(generic === undefined){
+        generic = p !== 2;
     }
     let result = new Vector(p);
     if(!generic){
@@ -87,7 +87,7 @@ function adem(a, b, c, p=2, generic=undefined){
 }
 
 function make_mono_admissible(mono, p=2, generic=undefined){
-    if(generic===undefined){
+    if(generic === undefined){
         generic = p!==2;
     }
     let result = new SerreCartanBasis(p);
@@ -345,6 +345,107 @@ class SerreCartanBasis extends Vector {
 }
 
 module.exports = SerreCartanBasis;
+
+
+function serre_cartan_basis(n, p = 2, generic = undefined, bound = 1){
+    /*
+    Serre-Cartan basis in dimension `n`.
+
+    INPUT:
+
+    - ``n`` - non-negative integer
+    - ``bound`` - positive integer (optional)
+    - ``prime`` - positive prime number (optional, default 2)
+
+    OUTPUT: tuple of mod p Serre-Cartan basis elements in dimension n
+
+    The Serre-Cartan basis consists of 'admissible monomials in the
+    Steenrod squares'. Thus at the prime 2, it consists of monomials
+    `\text{Sq}^{m_1} \text{Sq}^{m_2} ... \text{Sq}^{m_t}` with `m_i
+    \geq 2m_{i+1}` for each `i`. At odd primes, it consists of
+    monomials `\beta^{e_0} P^{s_1} \beta^{e_1} P^{s_2} ...  P^{s_k}
+    \beta^{e_k}` with each `e_i` either 0 or 1, `s_i \geq p s_{i+1} +
+    e_i` for all `i`, and `s_k \geq 1`.
+
+    EXAMPLES::
+
+        sage: from sage.algebras.steenrod.steenrod_algebra_bases import serre_cartan_basis
+        sage: serre_cartan_basis(7)
+        ((7,), (6, 1), (4, 2, 1), (5, 2))
+        sage: serre_cartan_basis(13,3)
+        ((1, 3, 0), (0, 3, 1))
+        sage: serre_cartan_basis(50,5)
+        ((1, 5, 0, 1, 1), (1, 6, 1))
+
+    If optional argument ``bound`` is present, include only those monomials
+    whose last term is at least ``bound`` (when p=2), or those for which
+    `s_k - e_k \geq bound` (when p is odd). ::
+
+        sage: serre_cartan_basis(7, bound=2)
+        ((7,), (5, 2))
+        sage: serre_cartan_basis(13, 3, bound=3)
+        ((1, 3, 0),)
+    */
+    generic = generic || p!==2;
+    if( n === 0){
+        return [[]];
+    }
+    if(!generic){
+        // Build basis recursively.  last = last term.
+        // last is >= bound, and we will append (last,) to the end of
+        // elements from serre_cartan_basis (n - last, bound=2 * last).
+        // This means that 2 last <= n - last, or 3 last <= n.
+        let result = [[n]];
+        for(let last = bound; last < 1+Math.floor(n/3); last ++){
+            for(let vec of serre_cartan_basis(n - last, 2, false, 2 * last)){
+                result.push([...vec, last]);
+            }
+        }
+        return result;
+    }
+    // p odd
+    let result;
+    if(n % (2 * (p-1)) === 0 && n/(2 * (p-1)) >= bound){
+        result = [[0, (n/(2 * (p-1)))|0, 0]];
+    } else if(n === 1){
+        result = [[1]];
+    } else {
+        result = []
+    }
+    // 2 cases: append P^{last}, or append P^{last} beta
+    // case 1: append P^{last}
+    for(let last = bound; last < 1+Math.floor(n/(2*(p - 1))); last ++){
+        if(n - 2*(p-1)*last > 0){
+            for(let vec of serre_cartan_basis(n - 2 * (p - 1) * last, p, generic, p * last)){
+                result.push([...vec, last,0]);
+            }
+        }
+    }
+    // case 2: append P^{last} beta
+    if(bound === 1){
+        bound = 0;
+    }
+    for(let last = bound + 1; last < 1 + (n/(2*(p - 1))) | 0; last++){
+        let basis = serre_cartan_basis(n - 2 * (p - 1) * last - 1, p, generic, p * last);
+        for(let vec of basis){
+            if(vec.length === 0){
+                vec = [0];
+            }
+            result.push([...vec, last, 1]);
+        }
+    }
+    return result;
+}
+
+SerreCartanBasis.basis = serre_cartan_basis;
+
+
+// console.log(serre_cartan_basis(7));
+// console.log([[7,], [6, 1], [4, 2, 1], [5, 2]]);
+// console.log(serre_cartan_basis(13,3));
+// console.log([[1, 3, 0], [0, 3, 1]]);
+// console.log(serre_cartan_basis(50,5));
+// console.log([[1, 5, 0, 1, 1], [1, 6, 1]]);
 
 
 

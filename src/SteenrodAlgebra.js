@@ -185,7 +185,7 @@ class BasisWrapper {
     }
 
     toString(){
-        return this.get(this.algebra.basis).toString();
+        return this.get(this.algebra.getBasis()).toString();
     }
 
     toJSON(){
@@ -198,26 +198,39 @@ BasisWrapper.basis = SerreCartanBasis;
 class SteenrodAlgebra {
     constructor(prime, basis){
         this.p = prime;
-        this.basis = basis;
+        this._generic = this.p !== 2;
+        this._basis = basis;
+    }
+
+    prime(){
+        return this.p;
+    }
+
+    one(){
+        return this.basis(0)[0];
+    }
+
+    setBasis(b){
+        this._basis = b;
     }
 
     Sq(...n){
         if(n.length > 1){
             return new BasisWrapper(this, MilnorBasis.Sq(n, this.p));
         } else {
-            return new BasisWrapper(this, this.basis.Sq(n, this.p));
+            return new BasisWrapper(this, this._basis.Sq(n, this.p));
         }
     }
 
     b(){
-        return new BasisWrapper(this, this.basis.b());
+        return new BasisWrapper(this, this._basis.b());
     }
 
     P(...n){
         if(n.length > 1){
             return new BasisWrapper(this, MilnorBasis.P(n, this.p));
         } else {
-            return new BasisWrapper(this, this.basis.P(n, this.p));
+            return new BasisWrapper(this, this._basis.P(n, this.p));
         }
     }
 
@@ -225,7 +238,7 @@ class SteenrodAlgebra {
         if(n.length > 1){
             return new BasisWrapper(this, MilnorBasis.bP(n, this.p));
         } else {
-            return new BasisWrapper(this, this.basis.bP(n, this.p));
+            return new BasisWrapper(this, this._basis.bP(n, this.p));
         }
     }
 
@@ -234,8 +247,112 @@ class SteenrodAlgebra {
     }
 
     pst(...st){
-        console.log(st);
         return new BasisWrapper(this, MilnorBasis.pst(st, this.p));
+    }
+
+    getBasis(){
+        return this._basis;
+    }
+
+    basis(n){
+        let result = [];
+        for(let basis_elt of this._basis.basis(n, this.p, this.generic)){
+            let vec = new this._basis(this.p);
+            vec.set(basis_elt, 1);
+            result.push(new BasisWrapper(this, vec));
+        }
+        return result;
+    }
+
+    antipode_on_basis(t){
+        /*
+        The antipode of a basis element of this algebra
+
+        INPUT:
+
+        - ``t`` -- tuple, the index of a basis element of self
+
+        OUTPUT: the antipode of the corresponding basis element,
+        as an element of self.
+
+        ALGORITHM: according to a result of Milnor's, the antipode of
+        `\text{Sq}(n)` is the sum of all of the Milnor basis elements
+        in dimension `n`. So: convert the element to the Serre-Cartan
+        basis, thus writing it as a sum of products of elements
+        `\text{Sq}(n)`, and use Milnor's formula for the antipode of
+        `\text{Sq}(n)`, together with the fact that the antipode is an
+        antihomomorphism: if we call the antipode `c`, then `c(ab) =
+        c(b) c(a)`.
+
+        At odd primes, a similar method is used: the antipode of
+        `P(n)` is the sum of the Milnor P basis elements in dimension
+        `n*2(p-1)`, multiplied by `(-1)^n`, and the antipode of `\beta
+        = Q_0` is `-Q_0`. So convert to the Serre-Cartan basis, as in
+        the `p=2` case.
+
+        EXAMPLES::
+
+            sage: A = SteenrodAlgebra()
+            sage: A.antipode_on_basis((4,))
+            Sq(1,1) + Sq(4)
+            sage: A.Sq(4).antipode()
+            Sq(1,1) + Sq(4)
+            sage: Adem = SteenrodAlgebra(basis='adem')
+            sage: Adem.Sq(4).antipode()
+            Sq^3 Sq^1 + Sq^4
+            sage: SteenrodAlgebra(basis='pst').Sq(3).antipode()
+            P^0_1 P^1_1 + P^0_2
+            sage: a = SteenrodAlgebra(basis='wall_long').Sq(10)
+            sage: a.antipode()
+            Sq^1 Sq^2 Sq^4 Sq^1 Sq^2 + Sq^2 Sq^4 Sq^1 Sq^2 Sq^1 + Sq^8 Sq^2
+            sage: a.antipode().antipode() == a
+            True
+
+            sage: SteenrodAlgebra(p=3).P(6).antipode()
+            P(2,1) + P(6)
+            sage: SteenrodAlgebra(p=3).P(6).antipode().antipode()
+            P(6)
+
+        TESTS::
+
+            sage: Milnor = SteenrodAlgebra()
+            sage: all([x.antipode().antipode() == x for x in Milnor.basis(11)]) // long time
+            True
+            sage: A5 = SteenrodAlgebra(p=5, basis='adem')
+            sage: all([x.antipode().antipode() == x for x in A5.basis(25)])
+            True
+            sage: H = SteenrodAlgebra(profile=[2,2,1])
+            sage: H.Sq(1,2).antipode() in H
+            True
+        */
+        let p = this.prime();
+        // if(this.getBasis() !== SerreCartanBasis){
+        //     return this._change_basis_on_basis(t, 'serre-cartan').antipode();
+        // }
+        let antipode = this.one();
+        if(!this._generic) {
+            for (let n of t) {
+                antipode = self(sum(SteenrodAlgebra().basis(n))) * antipode
+            }
+            return antipode
+        }
+        let index = 0;
+        for(let n of t){
+            if( index % 2 === 0 ){
+                if(n !== 0){
+                    antipode = -self.Q(0) * antipode
+                }
+            } else {
+                B = SteenrodAlgebra(p=p,generic=self._generic).basis(n * 2 * (p-1))
+                s = self(0)
+                for(let b of B){
+                    if(len(b.leading_support()[0]) == 0){
+                        s += self(b)
+                    }
+                }
+                antipode = (-1)**n * s * antipode;
+            }
+        }
     }
 }
 
