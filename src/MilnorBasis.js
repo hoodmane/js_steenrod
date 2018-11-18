@@ -443,7 +443,7 @@ function milnor_basis_even(n, p, profile, trunc){
 }
 
 
-function milnor_basis(n, p = 2, generic = undefined, kwds = {}){
+function milnor_basis_tuples(n, p = 2, generic = undefined, kwds = {}){
     /*
     Milnor basis in dimension `n` with profile function ``profile``.
 
@@ -589,6 +589,14 @@ function milnor_basis(n, p = 2, generic = undefined, kwds = {}){
         }
     }
     return result;
+}
+
+function milnor_basis(n, p, generic, kwds){
+    return milnor_basis_tuples(n, p, generic, kwds).map( (b) => {
+        let vec = new MilnorBasis(p);
+        vec.set(b,1);
+        return vec;
+    });
 }
 
 MilnorBasis.basis = milnor_basis;

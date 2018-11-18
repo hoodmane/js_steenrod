@@ -347,7 +347,7 @@ class SerreCartanBasis extends Vector {
 module.exports = SerreCartanBasis;
 
 
-function serre_cartan_basis(n, p = 2, generic = undefined, bound = 1){
+function serre_cartan_basis_tuples(n, p = 2, generic = undefined, bound = 1){
     /*
     Serre-Cartan basis in dimension `n`.
 
@@ -436,6 +436,15 @@ function serre_cartan_basis(n, p = 2, generic = undefined, bound = 1){
     }
     return result;
 }
+
+function serre_cartan_basis(n, p, generic, kwds){
+    return serre_cartan_basis_tuples(n, p, generic).map( (b) => {
+        let vec = new SerreCartanBasis(this.p);
+        vec.set(b,1);
+        return vec;
+    });
+}
+
 
 SerreCartanBasis.basis = serre_cartan_basis;
 

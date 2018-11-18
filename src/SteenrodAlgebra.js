@@ -133,12 +133,17 @@ class BasisWrapper {
     }
 
     antipode(){
-        let sc = this.getSerreCartan();
-        throw new Error("Not implemented");
+        let result = new BasisWrapper(this.algebra,new MilnorBasis(this.algebra.p));
+        for(let [key, value] of this.getSerreCartan()){
+            let s = this.algebra.antipode_on_basis(key).mult(value);
+            console.log(s);
+            result = result.add(s);
+        }
+        return result;
     }
 
     add(other_vector){
-        if(this.algebra.p !== otherVector.algebra.p){
+        if(this.algebra.p !== other_vector.algebra.p){
             throw new Error(`Vectors ${this} and ${other_vector} belong to different algebras and can't be multiplied.`);
         }
         let result = new BasisWrapper(this.algebra);
@@ -155,6 +160,16 @@ class BasisWrapper {
     }
 
     mult(other_vector){
+        if(other_vector.constructor === Number){
+            let result = new BasisWrapper(this.algebra);
+            if(this.serre_cartan){
+                result.serre_cartan = this.serre_cartan.copy().scale(-1);
+            }
+            if(this.milnor){
+                result.milnor = this.milnor.copy().scale(-1);
+            }
+            return result;
+        }
         if(this.algebra.p !== other_vector.algebra.p){
             throw new Error(`Vectors ${this} and ${other_vector} belong to different algebras and can't be multiplied.`);
         }
@@ -255,13 +270,9 @@ class SteenrodAlgebra {
     }
 
     basis(n){
-        let result = [];
-        for(let basis_elt of this._basis.basis(n, this.p, this.generic)){
-            let vec = new this._basis(this.p);
-            vec.set(basis_elt, 1);
-            result.push(new BasisWrapper(this, vec));
-        }
-        return result;
+        return this._basis.basis(n, this.p, this.generic).map( (b) => {
+            return new BasisWrapper(this, b);
+        });
     }
 
     antipode_on_basis(t){
@@ -326,37 +337,45 @@ class SteenrodAlgebra {
             True
         */
         let p = this.prime();
-        // if(this.getBasis() !== SerreCartanBasis){
-        //     return this._change_basis_on_basis(t, 'serre-cartan').antipode();
-        // }
-        let antipode = this.one();
+        if(this.getBasis() !== SerreCartanBasis){
+            let vec = new MilnorBasis(p);
+            vec.set(t,1);
+            return this.antipode(new BasisWrapper(this,vec));
+        }
+        let antipode = MilnorBasis.unit(this.p);
         if(!this._generic) {
             for (let n of t) {
-                antipode = self(sum(SteenrodAlgebra().basis(n))) * antipode
+                let antipodeOfSqn = MilnorBasis.basis(n, this.p, this._generic).reduce((a,b)=>a.add(b));
+                antipode = antipodeOfSqn.mult(antipode);
             }
-            return antipode
+            return new BasisWrapper(this, antipode);
         }
-        let index = 0;
-        for(let n of t){
+        for(let index = 0; index < t.length; index++){
+            let n = t[index];
             if( index % 2 === 0 ){
                 if(n !== 0){
-                    antipode = -self.Q(0) * antipode
+                    antipode = this.Q(0).mult(antipode).mult(-1);
                 }
             } else {
-                B = SteenrodAlgebra(p=p,generic=self._generic).basis(n * 2 * (p-1))
-                s = self(0)
+                let B = MilnorBasis.basis(n * 2 * (p-1), this.p, this._generic);
+                let s = new MilnorBasis(this.p);
+                console.log("1", B);
                 for(let b of B){
-                    if(len(b.leading_support()[0]) == 0){
-                        s += self(b)
+                    console.log(2, b);
+                    let b_tuple = Array.from(b.keys())[0];
+                    console.log(3, b_tuple);
+                    if(b_tuple[0].length === 0){
+                        s = s.add(b);
+                        console.log("hi");
+                        console.log(s);
                     }
                 }
-                antipode = (-1)**n * s * antipode;
+                antipode = s.mult(antipode).mult(-((n%2)*2 - 1));
             }
         }
+        return new BasisWrapper(this, antipode);
     }
 }
-
-
 
 module.exports = SteenrodAlgebra;
 
