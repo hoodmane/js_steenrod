@@ -233,4 +233,4 @@ function * WeightedIntegerVectors(n, l){
 }
 exports.WeightedIntegerVectors = WeightedIntegerVectors;
 
-// console.log(Array.from(WeightedIntegerVectors(3, [2,1,1])));
+// fle.log(Array.from(WeightedIntegerVectors(3, [2,1,1])));

@@ -136,7 +136,6 @@ class BasisWrapper {
         let result = new BasisWrapper(this.algebra,new MilnorBasis(this.algebra.p));
         for(let [key, value] of this.getSerreCartan()){
             let s = this.algebra.antipode_on_basis(key).mult(value);
-            console.log(s);
             result = result.add(s);
         }
         return result;
@@ -175,8 +174,6 @@ class BasisWrapper {
         }
         let result = new BasisWrapper(this.algebra);
         if(this.serre_cartan && other_vector.serre_cartan){
-            console.log("sc: ", this.serre_cartan);
-            console.log("sc: ",other_vector.serre_cartan);
             result.serre_cartan = this.serre_cartan.mult(other_vector.serre_cartan)
         }
         if(this.milnor && other_vector.milnor){
@@ -270,7 +267,8 @@ class SteenrodAlgebra {
     }
 
     basis(n){
-        return this._basis.basis(n, this.p, this.generic).map( (b) => {
+        console.log(this.p, this._generic);
+        return this._basis.basis(n, this.p, this._generic).map( (b) => {
             return new BasisWrapper(this, b);
         });
     }
@@ -359,15 +357,10 @@ class SteenrodAlgebra {
             } else {
                 let B = MilnorBasis.basis(n * 2 * (p-1), this.p, this._generic);
                 let s = new MilnorBasis(this.p);
-                console.log("1", B);
                 for(let b of B){
-                    console.log(2, b);
                     let b_tuple = Array.from(b.keys())[0];
-                    console.log(3, b_tuple);
                     if(b_tuple[0].length === 0){
                         s = s.add(b);
-                        console.log("hi");
-                        console.log(s);
                     }
                 }
                 antipode = s.mult(antipode).mult(-((n%2)*2 - 1));

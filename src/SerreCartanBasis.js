@@ -439,7 +439,7 @@ function serre_cartan_basis_tuples(n, p = 2, generic = undefined, bound = 1){
 
 function serre_cartan_basis(n, p, generic, kwds){
     return serre_cartan_basis_tuples(n, p, generic).map( (b) => {
-        let vec = new SerreCartanBasis(this.p);
+        let vec = new SerreCartanBasis(p);
         vec.set(b,1);
         return vec;
     });
